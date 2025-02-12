@@ -61,7 +61,7 @@ The purpose of this exercise is to gauge one's ability to build agentic systems 
 Consequently, you should not focus on the performance and/or quality of the final compiled program, but rather on the design of the system itself.
 Do not worry if you are not familiar with LLVM IR or if your final code does not compile - the environment in this exercise is made complex on purpose,
 since in real world we often need to interact with parts of the stack that we might not be familiar with (or have no control over).
-Simply focus on your part and do your best there!
+Instead, focus on your part and do your best there!
 
 Since the assignment is focused around system design, it is left open-ended on purpose and there are no particular tasks or objectives that we expect you to achieve
 (there is no "one good answer" when it comes to system design).
@@ -70,11 +70,11 @@ However, you can consider (some) of the following steps/milestones as an example
  - make the agent explain what the main bottleneck in the input code is
  - make the agent suggest changes to the input IR and explain why they are supposed to help
  - make the agent improve (in some sense) over time with a feedback loop
-Having said that, you are also free to ignore them if you think there is a better way of approaching it (be ready to explain why).
+Having said that, you are also free to ignore them if you think there is a better way of approaching the problem (be ready to explain why).
 
-Importantly, while working on the problem, please please pay special attention to things such as:
+Importantly, while working please pay special attention to things such as:
  - determining how to prepare/postprocess the data that is fed to/obtained from the agent
- - determining the best of providing the feedback to the agent
+ - determining the best way of providing the feedback to the agent
  - exploring different techniques to query the underlying LLM
  - making sure things do not break even if the agent does not produce valid programs
  - following good software engineering practices
@@ -86,5 +86,7 @@ On the other hand, the following things are not necessary, although they might b
 
  Note that you can try to obtain as much information as possible from the internet to accomplish things.
  But please make sure to avoid any situations when the solution to the problem is given to the agent as part of its input.
+
+Finally, for the sake of clarity: you are not expected to do all there is to be done here, but of course the more you achieve the better.
 
 Good luck!
