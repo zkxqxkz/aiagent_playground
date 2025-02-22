@@ -1,3 +1,6 @@
+"""
+python main.py --problem 1
+"""
 import argparse
 import importlib
 import timeit
@@ -6,7 +9,10 @@ import sys
 import numpy as np
 
 from problems.api import Problem
+from agent import QuestionAnsweringAgent
+from sglang.lang.interpreter import ProgramState
 
+MODEL_ID = "deepseek-ai/deepseek-coder-6.7b-instruct"
 
 def run_agent(problem: Problem, ref_out):
     llvmir = problem.cfn_src
@@ -16,6 +22,40 @@ def run_agent(problem: Problem, ref_out):
     print(llvmir)
     print('================================\n')
 
+    questions = [
+        "Explain what the input code does",
+        "Explain the main bottleneck in the input code is",
+        "Suggest changes to the input IR and explain why they are supposed to help",
+    ]
+    
+    # Initialize question answering agent
+    qa_agent = QuestionAnsweringAgent(model=MODEL_ID)
+    state: ProgramState = qa_agent(str(llvmir), questions)
+    qa_agent.parse_output()
+    qa_agent.shutdown()
+    
+    # Use the output from the above to optimize, based on the above
+    
+    """
+    while i < max_retries:
+        opt_agent = CodeOptimizationAgent(model=...)
+        opt_agent()
+        
+        # validate output with the input
+        optimized = opt_agent.get_optimized()
+        
+        problem.optimize(optimized)
+        
+        # if good save, 
+        # if not good, check correctness, and use the error message to optimize
+        # increament counter
+        
+    """
+    
+    
+  
+
+    breakpoint()
     # run your agent here!
     # TODO: for now just return a copy of the original IR
     optimized = str(llvmir)
@@ -63,6 +103,7 @@ def main():
     ref = p.fn(*p.get_test_data())
     cref = p.cfn(*p.get_test_data())
     check_the_same(ref, cref)
+
 
     run_agent(p, ref)
 
