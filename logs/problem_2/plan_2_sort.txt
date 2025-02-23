@@ -1,0 +1,25 @@
+To address the problem with the LLVM IR code and optimize it, we need to adhere to a structured plan:
+
+1. **Current Bottleneck on the Machine**:
+   - The main bottleneck with respect to the machine is the inefficient use of the CPU cache. The current implementation lacks cache optimization like loop unrolling or vectorization, which could significantly speed up operations on a large array by reducing cache misses.
+
+2. **Current Bottleneck in LLVM IR Operations**:
+   - There is redundant calculation and unnecessary load/store operations within the inner loops. This can cause excessive memory access, slowing down the execution.
+   - The presence of multiple phi nodes with the same name resulting in errors (e.g., `.254` being defined multiple times) indicates a flawed transformation or optimization step in the IR code generation.
+
+3. **Potential Optimizations**:
+   - **Loop Unrolling**: This can reduce the overhead of branch instructions and improve instruction-level parallelism by increasing the number of operations per loop iteration.
+   - **Vectorization**: Using SIMD (Single Instruction, Multiple Data) instructions to process multiple elements of the array in parallel can significantly improve performance.
+   - **Eliminate Redundant Operations**: Consolidate repeated calculations and reduce the number of load/store instructions within loops.
+   - **Correct Phi Nodes**: Ensure unique names for all phi nodes and correctly manage value propagation to avoid LLVM IR parsing errors.
+
+4. **Justification for Optimization**:
+   - Loop unrolling and vectorization take advantage of modern CPU architectures, particularly the provided machine, which has a high number of cores and large caches. These optimizations will more effectively utilize the CPU's capabilities.
+   - By eliminating redundant operations and ensuring correct IR code, we reduce computational overhead and avoid parsing issues.
+   - These optimizations will result in faster execution times because they reduce the number of executed instructions and improve data locality, thus minimizing cache misses.
+
+**CHANGES TO BE MADE:**
+- Apply loop unrolling to the nested loops to reduce branching overhead and increase the number of operations per iteration.
+- Utilize vectorized operations to process multiple data points simultaneously, taking advantage of SIMD instructions.
+- Correct the LLVM IR code by ensuring unique names for all phi nodes and removing any redundant definitions.
+- Refactor the IR to minimize unnecessary load/store operations within the loops, thereby reducing memory traffic.
