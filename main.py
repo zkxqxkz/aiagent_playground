@@ -5,16 +5,21 @@ import argparse
 import importlib
 import timeit
 import sys
-
+import time
 import numpy as np
 
 from problems.api import Problem
-from agent import QuestionAnsweringAgent
+import inspect
+
+from agent.deepseek_agent import OptimizationPlanningAgent
 from sglang.lang.interpreter import ProgramState
+
+
+from agent.openai_agent import OAIAgent
 
 MODEL_ID = "deepseek-ai/deepseek-coder-6.7b-instruct"
 
-def run_agent(problem: Problem, ref_out):
+def run_agent(problem: Problem, ref_out, max_retries: int = 3):
     llvmir = problem.cfn_src
 
     print('Agent input:')
@@ -22,51 +27,117 @@ def run_agent(problem: Problem, ref_out):
     print(llvmir)
     print('================================\n')
 
-    questions = [
-        "Explain what the input code does",
-        "Explain the main bottleneck in the input code is",
-        "Suggest changes to the input IR and explain why they are supposed to help",
-    ]
+
+    """
+    # This method uses sglang and deepseek 
     
-    # Initialize question answering agent
-    qa_agent = QuestionAnsweringAgent(model=MODEL_ID)
-    state: ProgramState = qa_agent(str(llvmir), questions)
-    qa_agent.parse_output()
-    qa_agent.shutdown()
+    # Using Open source model (deepseek) tends to hallucinate, will need to finetune.
+    # Afterwards, consider using trl PPOTrainer and PPOConfig to provide feedback
+    # ex. based on correctness (0 or 1) and the run time (1.0 - (optimized_time / original_time))
+    # then final_reward = correctness_reward + performance_reward
+    # use the reward for ppo_trainer.step(..., reward)
     
     # Use the output from the above to optimize, based on the above
-    
-    """
-    while i < max_retries:
-        opt_agent = CodeOptimizationAgent(model=...)
-        opt_agent()
-        
-        # validate output with the input
-        optimized = opt_agent.get_optimized()
-        
-        problem.optimize(optimized)
-        
-        # if good save, 
-        # if not good, check correctness, and use the error message to optimize
-        # increament counter
-        
-    """
-    
-    
-  
-
+    llvmir_optimization_agent = OptimizationPlanningAgent(model=MODEL_ID)
+    llvmir_optimization_agent(
+        str(llvmir), 
+        inspect.getsource(problem.fn),
+        problem.test_data,
+        problem.cfn(*problem.get_test_data()),
+        benchmark(problem.fn, problem.get_test_data()),
+        problem.cpu_info,
+    ) # infernce
+    llvmir_optimization_agent.parse_output()
+    plan = llvmir_optimization_agent.genrate_plan()
+    print(plan)
     breakpoint()
-    # run your agent here!
-    # TODO: for now just return a copy of the original IR
-    optimized = str(llvmir)
+    llvmir_optimization_agent.shutdown()
+    
+    """
 
-    # try to compile the agent-generated IR
-    problem.optimize(optimized)
+    cref = problem.cfn(*problem.get_test_data())
+    
+    agent = OAIAgent(model="gpt-4o")
+    current_llvmir = str(llvmir)
 
-    # after calling .optimize(), you can use "problem.ai_cfn(*ref_out)" to run your function
-    # and perhaps compare it with the reference output
-    # if you want to recompile, please call "problem.reset()" before calling "problem.optimize()"
-    # again
+    output = problem.cfn(*problem.get_test_data())
+    runtime = benchmark(problem.fn, problem.get_test_data())
+    failed_generation = failed_plan = error = None
+    i = 0
+
+    while i < max_retries:
+        print("Iter: ", i)
+        problem.reset()
+        plan_file_name = f"./plan_{i}_{problem.fn.__name__}.txt"
+        
+        agent.create_plan(
+            llvm_code=current_llvmir, 
+            python_code=inspect.getsource(problem.fn),
+            test_data=problem.test_data,
+            output=problem.cfn(*problem.get_test_data()),
+            runtime=benchmark(problem.fn, problem.get_test_data()),
+            cpu_info=problem.cpu_info,
+            failed_plan = failed_plan,
+            failed_generation=failed_generation,
+            error=error,
+            save_path=plan_file_name,
+            cfn_name=problem._cfn_name,
+        )
+        optimized = agent.optimize(
+            path=plan_file_name,
+            llvm_code=current_llvmir, 
+            cfn_name=problem._cfn_name,
+            test_data=problem.test_data,
+            output=output,
+            runtime=runtime,
+        )
+
+        print('\n================================')
+        print('Agent output:\n')
+        print(optimized)
+        print('================================\n')
+
+        # save the optimized 
+        plan_file_name = f"./out_{i}_{problem.fn.__name__}.txt"
+        with open(plan_file_name, "w") as f:
+            f.write(optimized)
+        try:
+            problem.optimize(optimized)
+            ai = problem.ai_cfn(*problem.get_test_data())
+            
+            if check_the_same(cref, ai):
+                
+                # benchmark
+                total_time = 0.0
+                N = 1000
+                for _ in range(N):
+                    total_time += benchmark(problem.ai_cfn, problem.get_test_data())
+                
+                runtime_avg = total_time / N
+                print("average run-time: ", runtime_avg)
+                current_llvmir=optimized
+                agent.optimized_codes.append((runtime_avg, optimized))
+                failed_generation = failed_plan = error = None
+                
+            else:
+                # provide failed generation that produces different output
+                failed_generation = optimized
+                with open(plan_file_name, "r", encoding="utf-8") as file:
+                    failed_plan = file.read()
+                error = None
+        except Exception as err:
+            print(f"Could not process\n{optimized}\n\n, got error {err}")
+            failed_generation = optimized
+            error = err
+            failed_plan = None
+        i += 1
+        
+    problem.reset()
+    
+    # get the fastest code
+    agent.optimized_codes.sort(key=lambda x: x[0])
+    best_ai_output = agent.optimized_codes[0][1]
+    problem.optimize(best_ai_output)
 
 
 def benchmark(fn, data):
@@ -104,8 +175,7 @@ def main():
     cref = p.cfn(*p.get_test_data())
     check_the_same(ref, cref)
 
-
-    run_agent(p, ref)
+    run_agent(p, ref, max_retries=5)   # get the best of the three tries
 
     ai = p.ai_cfn(*p.get_test_data())
     if not check_the_same(cref, ai):

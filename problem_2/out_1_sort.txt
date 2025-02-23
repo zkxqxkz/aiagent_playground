@@ -1,0 +1,54 @@
+; Function Attrs: nofree norecurse nounwind
+define i32 @_ZN8problems8problem24sortB2v1B38c8tJTIeFIjxB2IKSgI4CrvQClQZ6FczSBAA_3dE5ArrayIxLi1E1A7mutable7alignedE({ i8*, i8*, i64, i64, i64*, [1 x i64], [1 x i64] }* noalias nocapture writeonly %retptr, { i8*, i32, i8*, i8*, i32 }** noalias nocapture readnone %excinfo, i8* %arg.a.0, i8* %arg.a.1, i64 %arg.a.2, i64 %arg.a.3, i64* %arg.a.4, i64 %arg.a.5.0, i64 %arg.a.6.0) local_unnamed_addr #0 {
+B0.endif:
+  tail call void @NRT_incref(i8* %arg.a.0)
+  %.10924.not = icmp slt i64 %arg.a.5.0, 1
+  br i1 %.10924.not, label %common.ret, label %B16.endif.lr.ph
+
+B16.endif.lr.ph:
+  %.310 = ptrtoint i64* %arg.a.4 to i64
+  br label %B16.endif
+
+B14.loopexit:
+  br label %common.ret
+
+B38:
+  %.185.022 = phi i64 [ %.254, %B82 ], [ 0, %B16.endif ]
+  %.254 = add nuw i64 %.185.022, 1
+  %.298 = add i64 %.185.022, %.310
+  %.312 = inttoptr i64 %.298 to i64*
+  %.313 = load i64, i64* %.312, align 8
+  %.346 = icmp slt i64 %.313, %.345
+  br i1 %.346, label %B56, label %B82
+
+B56:
+  store i64 %.345, i64* %.312, align 8
+  store i64 %.313, i64* %.344, align 8
+  br label %B82
+
+B82:
+  %.254 = phi i64 [ %.185.022, %B56 ], [ %.254, %B38 ]
+  %exitcond.not.3 = icmp eq i64 %.254, %arg.a.5.0
+  br i1 %exitcond.not.3, label %B14.loopexit, label %B38
+
+common.ret:
+  %retptr.repack = getelementptr inbounds { i8*, i8*, i64, i64, i64*, [1 x i64], [1 x i64] }, { i8*, i8*, i64, i64, i64*, [1 x i64], [1 x i64] }* %retptr, i64 0, i32 0
+  store i8* %arg.a.0, i8** %retptr.repack, align 8
+  %retptr.repack1 = getelementptr inbounds { i8*, i8*, i64, i64, i64*, [1 x i64], [1 x i64] }, { i8*, i8*, i64, i64, i64*, [1 x i64], [1 x i64] }* %retptr, i64 0, i32 1
+  store i8* %arg.a.1, i8** %retptr.repack1, align 8
+  %retptr.repack3 = getelementptr inbounds { i8*, i8*, i64, i64, i64*, [1 x i64], [1 x i64] }, { i8*, i8*, i64, i64, i64*, [1 x i64], [1 x i64] }* %retptr, i64 0, i32 2
+  store i64 %arg.a.2, i64* %retptr.repack3, align 8
+  %retptr.repack5 = getelementptr inbounds { i8*, i8*, i64, i64, i64*, [1 x i64], [1 x i64] }, { i8*, i8*, i64, i64, i64*, [1 x i64], [1 x i64] }* %retptr, i64 0, i32 3
+  store i64 %arg.a.3, i64* %retptr.repack5, align 8
+  %retptr.repack7 = getelementptr inbounds { i8*, i8*, i64, i64, i64*, [1 x i64], [1 x i64] }, { i8*, i8*, i64, i64, i64*, [1 x i64], [1 x i64] }* %retptr, i64 0, i32 4
+  store i64* %arg.a.4, i64** %retptr.repack7, align 8
+  %1 = getelementptr inbounds { i8*, i8*, i64, i64, i64*, [1 x i64], [1 x i64] }, { i8*, i8*, i64, i64, i64*, [1 x i64], [1 x i64] }* %retptr, i64 0, i32 5, i64 0
+  store i64 %arg.a.5.0, i64* %1, align 8
+  %2 = getelementptr inbounds { i8*, i8*, i64, i64, i64*, [1 x i64], [1 x i64] }, { i8*, i8*, i64, i64, i64*, [1 x i64], [1 x i64] }* %retptr, i64 0, i32 6, i64 0
+  store i64 %arg.a.6.0, i64* %2, align 8
+  ret i32 0
+
+B16.endif:
+  %.51.025 = phi i64 [ 0, %B16.endif.lr.ph ], [ %.122, %B14.loopexit ]
+  br i1 true, label %B38, label %B14.loopexit
+}

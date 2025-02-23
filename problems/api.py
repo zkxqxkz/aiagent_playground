@@ -1,7 +1,7 @@
 import copy
 
 import compiler as C
-
+from cpuinfo import get_cpu_info
 
 class Problem():
     def __init__(self, fn, signature, test_data):
@@ -15,6 +15,17 @@ class Problem():
 
         self._ai_cfn = None
         self._ai_src = None # AI-optimized LLVM-IR of the target function
+        
+
+        cpu_info = get_cpu_info()
+        self.cpu_info  = (
+            f"CPU: {cpu_info['brand_raw']} | "
+            f"Architecture: {cpu_info['arch']} | "
+            f"Bits: {cpu_info['bits']} | "
+            f"Cores: {cpu_info['count']} | "
+            f"L2 Cache: {cpu_info.get('l2_cache_size', 'Unknown')} | "
+            f"L3 Cache: {cpu_info.get('l3_cache_size', 'Unknown')}"
+        )
 
     def get_test_data(self):
         return copy.deepcopy(self.test_data)

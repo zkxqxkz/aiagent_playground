@@ -1,0 +1,30 @@
+1. **Current Bottleneck with Respect to the Machine:**
+
+   The provided machine has a high number of cores (128), which suggests that parallelizing the workload could significantly enhance performance. However, the current LLVM IR code does not take advantage of this parallelism. The core matrix multiplication operation is inherently parallelizable since each element of the output matrix can be computed independently. The machine's large L2 and L3 caches are well-suited for handling large data sets, but the current code may not be efficiently utilizing these caches due to lack of data locality optimization.
+
+2. **Current Bottleneck with Respect to the Operations in the LLVM IR Code:**
+
+   The current LLVM IR code implements a straightforward nested loop for matrix multiplication, which results in suboptimal memory access patterns. The innermost loop iterates over the dimension `k`, causing frequent cache line evictions due to accessing non-contiguous memory addresses. This results in poor cache utilization and higher memory latency. The lack of loop unrolling and vectorization further contributes to the bottleneck, as the code does not make use of SIMD (Single Instruction, Multiple Data) capabilities of the processor.
+
+3. **What Can Be Optimized and What Will Be Done:**
+
+   - **Loop Reordering:** Reorder the loops to improve data locality. Typically, iterating over the contiguous memory block first (i.e., the innermost loop) improves cache performance.
+   - **Loop Unrolling:** Apply loop unrolling to reduce loop overhead and allow for more instructions to be executed in parallel.
+   - **Vectorization:** Use the vectorization capabilities of the processor to compute multiple elements simultaneously. This can be achieved by utilizing LLVM's vector operations.
+   - **Parallelization:** Introduce multi-threading using OpenMP or similar to utilize the available 128 cores fully.
+   - **Memory Alignment and Prefetching:** Ensure that data alignments are optimal for cache line access and introduce prefetching to reduce memory latency.
+
+4. **Why the Planned Optimization is Correct and Will Be Faster:**
+
+   - **Improved Data Locality:** By reordering the loops, we minimize cache misses, allowing the computation to proceed with reduced memory fetch penalties.
+   - **Loop Unrolling:** Reduces loop control overhead and increases the instruction level parallelism, allowing the CPU to execute more operations per cycle.
+   - **Vectorization:** By using SIMD instructions, we can perform operations on multiple data points in a single CPU cycle, effectively reducing the number of instructions.
+   - **Parallelization:** Utilizing multiple cores can drastically reduce computation time since the workload is distributed across multiple processing units.
+   - **Memory Alignment and Prefetching:** Proper alignment and prefetching ensure that data is readily available when needed, further reducing waiting times for memory access.
+
+CHANGES TO BE MADE:
+- Reorder the loops to improve data locality by accessing contiguous memory blocks first.
+- Apply loop unrolling to the innermost loop to reduce loop overhead and increase instruction-level parallelism.
+- Use LLVM's vector operations to enable SIMD execution for the matrix multiplication process.
+- Introduce parallelization using OpenMP or similar to take advantage of the 128 cores available.
+- Ensure that memory is correctly aligned for cache line access and introduce prefetching instructions to minimize memory latency.
